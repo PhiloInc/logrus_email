@@ -9,6 +9,7 @@ import (
 	"net/smtp"
 	"strconv"
 	"time"
+	"runtime"
 
 	"github.com/Philoinc/logrus"
 )
@@ -150,7 +151,17 @@ func (hook *MailHook) Levels() []logrus.Level {
 }
 
 func createMessage(entry *logrus.Entry, appname string) *bytes.Buffer {
-	body := entry.Time.Format(format) + " - " + entry.Message
+	// Cobble together a stack trace as best we can
+	// TJF: Something better must be available
+	trace := ""
+	for i := 0; i < 100; i++ {
+		pc, file, line, ok := runtime.Caller(i)
+		trace += fmt.Sprintf("%02d: 0x%08x %s:%d\r\n", i, pc, file, line)
+		if !ok {
+			break
+		}
+	}
+	body := entry.Time.Format(format) + " - " + entry.Message + "\r\nTrace:\r\n" + trace
 	subject := appname + " - " + entry.Level.String()
 	fields, _ := json.MarshalIndent(entry.Data, "", "\t")
 	contents := fmt.Sprintf("Subject: %s\r\n\r\n%s\r\n\r\n%s", subject, body, fields)
