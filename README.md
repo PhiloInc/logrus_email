@@ -1,4 +1,4 @@
-# Mail Hook for Logrus [![GoDoc](http://godoc.org/github.com/zbinderen/logrus_mail?status.svg)](http://godoc.org/github.com/zbindenren/logrus_mail) [![Go Report Card](https://goreportcard.com/badge/github.com/zbindenren/logrus_mail)](https://goreportcard.com/report/github.com/zbindenren/logrus_mail)
+# Mail Hook for Logrus [![GoDoc](http://godoc.org/github.com/Philoinc/logrus_mail?status.svg)](http://godoc.org/github.com/Philoinc/logrus_mail) [![Go Report Card](https://goreportcard.com/badge/github.com/Philoinc/logrus_mail)](https://goreportcard.com/report/github.com/Philoinc/logrus_mail)
 
 In some deployments, you'll want to report errors by email. If you add this hook, an email will send for the following levels:
 
@@ -13,7 +13,7 @@ The subject is of the form `APPLICATION_NAME - LEVEL` and the body contains the 
 Install the package with go:
 
 ```go
-go get github.com/zbindenren/logrus_mail
+go get github.com/Philoinc/logrus_mail
 ```
 
 ## Usage
@@ -23,8 +23,8 @@ For `APPLICATION_NAME`, substitute a short string that will identify your applic
 ```go
 import (
   "log/syslog"
-  "github.com/Sirupsen/logrus"
-  "github.com/zbindenren/logrus_mail"
+  "github.com/Philoinc/logrus"
+  "github.com/Philoinc/logrus_mail"
 )
 
 func main() {

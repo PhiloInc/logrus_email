@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/Philoinc/logrus"
 )
 
 const (
