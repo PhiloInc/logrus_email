@@ -104,7 +104,7 @@ func (hook *MailHook) Fire(entry *logrus.Entry) error {
 		return err
 	}
 	defer wc.Close()
-	message := createMessage(entry, hook.AppName)
+	message := createMessage(entry, hook.AppName, hook.From, hook.To)
 	if _, err = message.WriteTo(wc); err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (hook *MailHook) Fire(entry *logrus.Entry) error {
 func (hook *MailAuthHook) Fire(entry *logrus.Entry) error {
 	auth := smtp.PlainAuth("", hook.Username, hook.Password, hook.Host)
 
-	message := createMessage(entry, hook.AppName)
+	message := createMessage(entry, hook.AppName, hook.From, hook.To)
 
 	// Connect to the server, authenticate, set the sender and recipient,
 	// and send the email all in one step.
@@ -150,7 +150,7 @@ func (hook *MailHook) Levels() []logrus.Level {
 	}
 }
 
-func createMessage(entry *logrus.Entry, appname string) *bytes.Buffer {
+func createMessage(entry *logrus.Entry, appname string, from string, to string) *bytes.Buffer {
 	// Cobble together a stack trace as best we can
 	// TJF: Something better must be available
 	trace := ""
@@ -164,7 +164,8 @@ func createMessage(entry *logrus.Entry, appname string) *bytes.Buffer {
 	body := entry.Time.Format(format) + " - " + entry.Message + "\r\nTrace:\r\n" + trace
 	subject := appname + " - " + entry.Level.String()
 	fields, _ := json.MarshalIndent(entry.Data, "", "\t")
-	contents := fmt.Sprintf("Subject: %s\r\n\r\n%s\r\n\r\n%s", subject, body, fields)
+	contents := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s\r\n\r\n%s",
+		from, to, subject, body, fields)
 	message := bytes.NewBufferString(contents)
 	return message
 }
