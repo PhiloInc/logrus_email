@@ -104,7 +104,7 @@ func (hook *MailHook) Fire(entry *logrus.Entry) error {
 		return err
 	}
 	defer wc.Close()
-	message := createMessage(entry, hook.AppName, hook.From, hook.To)
+	message := createMessage(entry, hook.AppName, hook.From.Address, hook.To.Address)
 	if _, err = message.WriteTo(wc); err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (hook *MailHook) Fire(entry *logrus.Entry) error {
 func (hook *MailAuthHook) Fire(entry *logrus.Entry) error {
 	auth := smtp.PlainAuth("", hook.Username, hook.Password, hook.Host)
 
-	message := createMessage(entry, hook.AppName, hook.From, hook.To)
+	message := createMessage(entry, hook.AppName, hook.From.Address, hook.To.Address)
 
 	// Connect to the server, authenticate, set the sender and recipient,
 	// and send the email all in one step.
