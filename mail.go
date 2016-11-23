@@ -104,7 +104,7 @@ func (hook *MailHook) Fire(entry *logrus.Entry) error {
 		return err
 	}
 	defer wc.Close()
-	message := createMessage(entry, hook.AppName, hook.From.Address, hook.To.Address)
+	message := createMessage(entry, hook.AppName, "", "")
 	if _, err = message.WriteTo(wc); err != nil {
 		return err
 	}
@@ -164,8 +164,14 @@ func createMessage(entry *logrus.Entry, appname string, from string, to string) 
 	body := entry.Time.Format(format) + " - " + entry.Message + "\r\nTrace:\r\n" + trace
 	subject := appname + " - " + entry.Level.String()
 	fields, _ := json.MarshalIndent(entry.Data, "", "\t")
-	contents := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s\r\n\r\n%s",
-		from, to, subject, body, fields)
+	contents:= ""
+	if from != "" {
+		contents += fmt.Sprintf("From: %s\r\n", from)
+	}
+	if to != "" {
+		contents += fmt.Sprintf("To: %s\r\n", to)
+	}
+	contents += fmt.Sprintf("Subject: %s\r\n\r\n%s\r\n\r\n%s", subject, body, fields)
 	message := bytes.NewBufferString(contents)
 	return message
 }
