@@ -16,6 +16,7 @@ import (
 
 const (
 	format = "20060102 15:04:05"
+	MAX_DEPTH = 100
 )
 
 // MailHook to sends logs by email without authentication.
@@ -152,18 +153,26 @@ func (hook *MailHook) Levels() []logrus.Level {
 
 func createMessage(entry *logrus.Entry, appname string, from string, to string) *bytes.Buffer {
 	// Cobble together a stack trace as best we can
-	// TJF: Something better must be available
-	trace := ""
-	for i := 0; i < 100; i++ {
-		pc, file, line, ok := runtime.Caller(i)
-		trace += fmt.Sprintf("%02d: 0x%08x %s:%d\r\n", i, pc, file, line)
-		if !ok {
+	trace   := ""
+	callers := make([]uintptr, MAX_DEPTH+1)
+	depth   := runtime.Callers(1, callers)
+	frames  := runtime.CallersFrames(callers)
+	frame, more := frames.Next()
+	for i := 0; i < depth; i++ {
+		if !more {
 			break
 		}
+		trace += fmt.Sprintf("Frame %02d:\r\n", i)
+		trace += fmt.Sprintf("\tFile: %s\r\n", frame.File)
+		trace += fmt.Sprintf("\tFunction: %s\r\n", frame.Function)
+		trace += fmt.Sprintf("\tLine: %d\r\n", frame.Line)
+		trace += fmt.Sprintf("\tPC/Entry: 0x%08x/0x%08x\r\n", frame.PC, frame.Entry)
+		frame, more = frames.Next()
 	}
-	body := entry.Time.Format(format) + " - " + entry.Message + "\r\nTrace:\r\n" + trace
 	subject := appname + " - " + entry.Level.String()
 	fields, _ := json.MarshalIndent(entry.Data, "", "\t")
+	body := entry.Time.Format(format) + " - " + entry.Message + "\r\n\r\n"
+	body += trace + "\r\n\r\nData:\r\n\r\n" + fmt.Sprintf("%s", fields)
 	contents:= ""
 	if from != "" {
 		contents += fmt.Sprintf("From: %s\r\n", from)
@@ -171,7 +180,7 @@ func createMessage(entry *logrus.Entry, appname string, from string, to string) 
 	if to != "" {
 		contents += fmt.Sprintf("To: %s\r\n", to)
 	}
-	contents += fmt.Sprintf("Subject: %s\r\n\r\n%s\r\n\r\n%s", subject, body, fields)
+	contents += fmt.Sprintf("Subject: %s\r\n\r\n%s\r\n\r\n", subject, body)
 	message := bytes.NewBufferString(contents)
 	return message
 }
