@@ -156,18 +156,20 @@ func createMessage(entry *logrus.Entry, appname string, from string, to string) 
 	trace   := ""
 	callers := make([]uintptr, MAX_DEPTH+1)
 	depth   := runtime.Callers(1, callers)
-	frames  := runtime.CallersFrames(callers)
-	frame, more := frames.Next()
 	for i := 0; i < depth; i++ {
-		if !more {
+		pc := callers[i]
+		function := runtime.FuncForPC(pc)
+		if function == nil {
 			break
 		}
+		name := function.Name()
+		entry := function.Entry()
+		file, line := function.FileLine(pc)
 		trace += fmt.Sprintf("Frame %02d:\r\n", i)
-		trace += fmt.Sprintf("\tFile: %s\r\n", frame.File)
-		trace += fmt.Sprintf("\tFunction: %s\r\n", frame.Function)
-		trace += fmt.Sprintf("\tLine: %d\r\n", frame.Line)
-		trace += fmt.Sprintf("\tPC/Entry: 0x%08x/0x%08x\r\n", frame.PC, frame.Entry)
-		frame, more = frames.Next()
+		trace += fmt.Sprintf("\tFile: %s\r\n", file)
+		trace += fmt.Sprintf("\tFunction: %s\r\n", name)
+		trace += fmt.Sprintf("\tLine: %d\r\n", line)
+		trace += fmt.Sprintf("\tPC/Entry: 0x%08x/0x%08x\r\n", pc, entry)
 	}
 	subject := appname + " - " + entry.Level.String()
 	fields, _ := json.MarshalIndent(entry.Data, "", "\t")
