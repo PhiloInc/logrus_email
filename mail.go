@@ -118,18 +118,22 @@ func (hook *MailAuthHook) Fire(entry *logrus.Entry) error {
 
 	message := createMessage(entry, hook.AppName, hook.From.Address, hook.To.Address)
 
-	// Connect to the server, authenticate, set the sender and recipient,
-	// and send the email all in one step.
-	err := smtp.SendMail(
-		hook.Host+":"+strconv.Itoa(hook.Port),
-		auth,
-		hook.From.Address,
-		[]string{hook.To.Address},
-		message.Bytes(),
-	)
-	if err != nil {
-		return err
-	}
+	// Spawn the actual email sending since it appears to interfere with
+	// the HTTP request handling when a panic is caught and handled
+	// NOTE: It is critical that the message, which includes the stack
+	//       trace details, is created before the go routine is called
+	go func() {
+		// Connect to the server, authenticate, set the sender and recipient,
+		// and send the email all in one step.
+		smtp.SendMail(
+			hook.Host+":"+strconv.Itoa(hook.Port),
+			auth,
+			hook.From.Address,
+			[]string{hook.To.Address},
+			message.Bytes(),
+		)
+	}()
+
 	return nil
 }
 
