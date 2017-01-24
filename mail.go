@@ -114,8 +114,6 @@ func (hook *MailHook) Fire(entry *logrus.Entry) error {
 
 // Fire is called when a log event is fired.
 func (hook *MailAuthHook) Fire(entry *logrus.Entry) error {
-	auth := smtp.PlainAuth("", hook.Username, hook.Password, hook.Host)
-
 	message := createMessage(entry, hook.AppName, hook.From.Address, hook.To.Address)
 
 	// Spawn the actual email sending since it appears to interfere with
@@ -125,6 +123,7 @@ func (hook *MailAuthHook) Fire(entry *logrus.Entry) error {
 	go func() {
 		// Connect to the server, authenticate, set the sender and recipient,
 		// and send the email all in one step.
+		auth := smtp.PlainAuth("", hook.Username, hook.Password, hook.Host)
 		smtp.SendMail(
 			hook.Host+":"+strconv.Itoa(hook.Port),
 			auth,
